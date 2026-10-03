@@ -1,100 +1,60 @@
-name: Bug Report
-description: Report an issue or unexpected behavior that occurs within the application
+name: Android bug report
+description: Report a StreamFarvis Android problem.
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        **README: Before You Submit Your Issue**
-        - Issues are not a place to go ask support questions or start discussions. Please ask support questions or start discussions on the [discussions page](https://github.com/truelockmc/streambert/discussions).
-  - type: checkboxes
+        Please check [existing issues](https://github.com/FloKuersten/StreamFarvis/issues) first.
+        Never include TMDB tokens or personal data. Report vulnerabilities [privately](https://github.com/FloKuersten/StreamFarvis/security/advisories/new).
+  - type: input
+    id: version
     attributes:
-      label: Guidelines
-      description: Please ensure you've completed all of the following.
-      options:
-        - label: I have encountered this bug in the [latest release of Streambert](https://github.com/truelockmc/streambert/releases).
-          required: true
-        - label: I have [searched the issue tracker for open and closed issues](https://github.com/truelockmc/streambert/issues?q=is%3Aissue+sort%3Arelevance-desc) that are similar to the bug report I want to file, without success.
-          required: true
-        - label: This issue contains only one bug.
-          required: true
+      label: App version and APK build
+      description: Include the version and whether this is a published release, debug APK, or self-built APK. Add the commit if self-built.
+      placeholder: "1.0.0, published release APK"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Pixel 7, Android 15; or emulator, API 36"
+    validations:
+      required: true
+  - type: input
+    id: webview
+    attributes:
+      label: Android System WebView version
+      description: Find this in Android Settings > Apps > Android System WebView. Say unknown if unavailable.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Player source, if applicable
+      description: Name the selected source and whether one title or several are affected. Do not paste private playback URLs.
+      placeholder: "Videasy; several titles, or not applicable"
   - type: textarea
+    id: reproduce
     attributes:
-      label: Describe the bug
-      description: A clear and concise description of what the bug is.
+      label: Steps to reproduce
       placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
+        1. Open ...
+        2. Tap ...
+        3. Observe ...
     validations:
       required: true
   - type: textarea
+    id: behavior
     attributes:
-      label: Expected Behavior
-      description: A clear and concise description of what you expected to happen.
+      label: Expected and actual behavior
+      description: Include the exact visible error, if any.
     validations:
       required: true
-  - type: dropdown
-    attributes:
-      label: "Issue Labels"
-      description: Please select a label that fits this bug report. Choose multiple, if applicable.
-      multiple: true
-      options:
-        - ads/trackers are coming trough
-        - accessibility issue
-        - causes crash
-        - content not loading
-        - data loss
-        - feature stopped working
-        - inconsistent behavior
-        - keyboard control not working
-        - race condition
-        - text/string issue
-        - usability issue
-        - visual bug
-        - a specific series/movie not working properly
-    validations:
-      required: true
-  - type: input
-    attributes:
-      label: Streambert Version
-      description: |
-        Enter the version of streambert you are using (you can check that in your settings).
-      placeholder: v2.2.1
-    validations:
-      required: true
-  - type: input
-    attributes:
-      label: Operating System Version
-      description: What operating system version are you using? On Windows, click Start button > Settings > System > About. On macOS, click the Apple Menu > About This Mac. On Linux, use lsb_release or uname -a.
-      placeholder: "e.g. Windows 10, macOS Catalina 10.15.7, or Ubuntu 20.04"
-    validations:
-      required: true
-  - type: dropdown
-    attributes:
-      label: Installation Method
-      description: Which filetype did you use to install the App.
-      options:
-        - .AppImage
-        - .deb
-        - .dmg
-        - .exe
-        - .rpm
-        - other
-    validations:
-      required: true
-  - type: upload
-    id: screenshots
-    attributes:
-      label: Upload screenshots or videos
-      description: If applicable, add screenshots or videos to help explain your problem.
-    validations:
-      required: false
   - type: textarea
+    id: evidence
     attributes:
-      label: Additional Information
-      description: |
-        Add additional information here.
-        You may drag-and-drop log files here, or paste the log file in code blocks.
+      label: Screenshots or relevant logs
+      description: Attach files here or paste a short log excerpt. Remove tokens, credentials, private URLs, and personal information first.

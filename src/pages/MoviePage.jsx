@@ -64,6 +64,8 @@ import {
   GAMEPAD_CLEANUP_JS,
 } from "../utils/playerGamepadScript";
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
+import AndroidPlayer from "../components/AndroidPlayer";
+import { IS_ANDROID, getAndroidSource } from "../utils/android";
 
 export default function MoviePage({
   item,
@@ -92,7 +94,9 @@ export default function MoviePage({
   const [m3u8Url, setM3u8Url] = useState(null);
   const [interceptedSubs, setInterceptedSubs] = useState([]);
   const [playerSource, setPlayerSource] = useState(
-    () => storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
+    () => IS_ANDROID
+      ? getAndroidSource(storage.get("androidPlayerSource"))
+      : storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
   );
 
   // Accent colour + subtitle lang come from App-level state (via props),
@@ -296,7 +300,7 @@ export default function MoviePage({
       );
       // Switch to anime source if current source is not an anime source
       const currentSrc = PLAYER_SOURCES.find((s) => s.id === playerSource);
-      if (!currentSrc?.tag) {
+      if (!IS_ANDROID && !currentSrc?.tag) {
         const saved = storage.get("playerSource");
         const savedSrc = PLAYER_SOURCES.find((s) => s.id === saved);
         setPlayerSource(savedSrc?.tag ? saved : ANIME_DEFAULT_SOURCE);
@@ -304,7 +308,7 @@ export default function MoviePage({
     } else {
       // Switch back to non-anime source if current source is anime-only
       const currentSrc = PLAYER_SOURCES.find((s) => s.id === playerSource);
-      if (currentSrc?.tag) {
+      if (!IS_ANDROID && currentSrc?.tag) {
         const saved = storage.get("playerSource");
         const savedSrc = PLAYER_SOURCES.find((s) => s.id === saved);
         setPlayerSource(!savedSrc?.tag ? saved : NON_ANIME_DEFAULT_SOURCE);
@@ -317,7 +321,7 @@ export default function MoviePage({
 
   // Resolve AllManga movie URL via main-process IPC
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     const epKey = `movie_${item.id}_${dubMode}`;
 
     // Auto-failover: if a previous attempt taught us AllManga doesn't have
@@ -409,7 +413,7 @@ export default function MoviePage({
   }, [playing, playerSource, dubMode]);
 
   useEffect(() => {
-    if (!window.electron) return;
+    if (IS_ANDROID || !window.electron) return;
     const handler = window.electron.onM3u8Found((url) => {
       setM3u8Url((prev) => (prev !== url ? url : prev));
     });
@@ -437,7 +441,7 @@ export default function MoviePage({
   }, [showSourceMenu]);
 
   useEffect(() => {
-    if (!window.electron) return;
+    if (IS_ANDROID || !window.electron) return;
     const handler = window.electron.onSubtitleFound(({ url, lang }) => {
       // Only keep VTT, deduplicate per language (latest wins)
       if (!url || !url.toLowerCase().includes(".vtt")) return;
@@ -466,7 +470,7 @@ export default function MoviePage({
   // webview is still attached when we navigate it to about:blank.
   // This lets Chromium unload.
   useLayoutEffect(() => {
-    if (playing) return;
+    if (IS_ANDROID || playing) return;
     const wv = webviewRef.current;
     if (wv) {
       try {
@@ -477,6 +481,7 @@ export default function MoviePage({
 
   // On unmount: signal main process to destroy the player WebContents and flush session cache.
   useEffect(() => {
+    if (IS_ANDROID) return;
     return () => {
       window.electron?.playerStopped?.();
     };
@@ -499,7 +504,7 @@ export default function MoviePage({
   }, []);
 
   useEffect(() => {
-    setPlayerGamepadActive(gamepadEnabled && playing);
+    setPlayerGamepadActive(!IS_ANDROID && gamepadEnabled && playing);
     return () => setPlayerGamepadActive(false);
   }, [playing, gamepadEnabled]);
 
@@ -537,7 +542,7 @@ export default function MoviePage({
 
   // Attach webview load events so we know when the new source has painted
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     const wv = webviewRef.current;
     if (!wv) return;
     const done = () => setWebviewLoading(false);
@@ -551,7 +556,7 @@ export default function MoviePage({
 
   // ── Auto-track progress + auto-watched every 5s ──────────────────────────
   useEffect(() => {
-    if (!playing || !sourceSupportsProgress(playerSource)) return;
+    if (IS_ANDROID || !playing || !sourceSupportsProgress(playerSource)) return;
     let interval = null;
     const timer = setTimeout(() => {
       interval = setInterval(async () => {
@@ -663,11 +668,29 @@ export default function MoviePage({
     onHistory({ ...d, media_type: "movie" });
   }, [d, onHistory]);
 
+  useEffect(() => {
+    if (!IS_ANDROID) return;
+    const handleBack = (event) => {
+      if (event.defaultPrevented) return;
+      if (showTrailer) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setShowTrailer(false);
+      } else if (playing) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setPlaying(false);
+      }
+    };
+    window.addEventListener("streamfarvis:back-overlay", handleBack);
+    return () => window.removeEventListener("streamfarvis:back-overlay", handleBack);
+  }, [showTrailer, playing]);
+
   // Intercept fullscreen requests from embedded players (vidsrc / 2embed use
   // the native Fullscreen API which would otherwise fullscreen the entire app).
   // Videasy and AllManga handle fullscreen internally via CSS, skip those.
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     if (!NEEDS_INTERCEPT.includes(playerSource)) return;
     const enterH = window.electron?.onWebviewEnterFullscreen?.(() => {
       setPlayerFullscreen(true);
@@ -687,7 +710,7 @@ export default function MoviePage({
 
   // ── PiP pop-out: navigate main webview away so only one stream is active ──
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     const openH = window.electron?.onPipOpened?.(async () => {
       setPipOpen(true);
       pipWebContentsIdRef.current =
@@ -913,6 +936,18 @@ export default function MoviePage({
 
       {playing && !restricted && !isUnreleased && (
         <div className="section">
+          {IS_ANDROID ? (
+            <AndroidPlayer
+              title={title}
+              subtitle={year ? `Movie · ${year}` : "Movie"}
+              sourceId={playerSource}
+              onSourceChange={(source) => {
+                setPlayerSource(source);
+                storage.set("androidPlayerSource", source);
+              }}
+              url={getSourceUrl(playerSource, "movie", item.id, null, null, {}, playerAccentColor, playerSubLang)}
+            />
+          ) : (
           <div
             className={`player-wrap${playerFullscreen ? " player-wrap--fullscreen" : ""}`}
             ref={playerWrapRef}
@@ -1221,6 +1256,8 @@ export default function MoviePage({
             </button>
           </div>
 
+          )}
+
           {displayPct > 0 && (
             <div className="progress-bar-row">
               <div className="progress-bar-outer">
@@ -1296,7 +1333,7 @@ export default function MoviePage({
         />
       )}
 
-      {showDownload && (
+      {!IS_ANDROID && showDownload && (
         <DownloadModal
           onClose={() => setShowDownload(false)}
           m3u8Url={m3u8Url}

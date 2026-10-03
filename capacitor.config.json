@@ -1,0 +1,8 @@
+{
+  "appId": "com.farvis.streamfarvis",
+  "appName": "StreamFarvis",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" },
+  "android": { "backgroundColor": "#0c0c0f", "allowMixedContent": false },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

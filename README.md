@@ -1,258 +1,52 @@
-[![Downloads@latest](https://img.shields.io/github/downloads/truelockmc/streambert/latest/total?style=for-the-badge)](https://codeberg.org/truelockmc/streambert/releases/latest/)
-[![Release Version Badge](https://img.shields.io/github/v/release/truelockmc/streambert?style=for-the-badge)](https://github.com/truelockmc/streambert/releases)
-[![Issues Badge](https://img.shields.io/github/issues/truelockmc/streambert?style=for-the-badge)](https://github.com/truelockmc/streambert/issues)
-[![Closed Issues Badge](https://img.shields.io/github/issues-closed/truelockmc/streambert?color=%238256d0&style=for-the-badge)](https://github.com/truelockmc/streambert/issues?q=is%3Aissue+is%3Aclosed)<br>
+# StreamFarvis
 
-[![GitHub](https://img.shields.io/badge/GitHub-truelockmc%2Fstreambert-181717?style=for-the-badge&logo=github)](https://github.com/truelockmc/streambert)
-[![Codeberg](https://img.shields.io/badge/Codeberg-truelockmc%2Fstreambert-2185D0?style=for-the-badge&logo=codeberg)](https://codeberg.org/truelockmc/streambert)
-[![AUR Version](https://img.shields.io/aur/version/streambert-bin?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/streambert-bin)
-# Streambert
-A cross-platform Electron Desktop App to stream and download any Movie, TV Series or Anime in the World. Zero Ads and Tracking[*](#privacy-disclaimer) <br></br>
-<a href="https://trendshift.io/repositories/31115" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/31115" alt="truelockmc%2Fstreambert | Trendshift" width="250" height="55"/></a>
+An Android adaptation of [Streambert](https://github.com/truelockmc/streambert), with a movie and series catalog, a personal watchlist, and a native fullscreen player window.
 
-![Logo](public/logo.svg)
+[Download the latest APK](https://github.com/FloKuersten/StreamFarvis/releases/latest) · [Build from source](docs/DEVELOPMENT.md) · [Report a bug](https://github.com/FloKuersten/StreamFarvis/issues/new/choose)
 
-[Installation](#requirements)
+<p>
+  <img src="docs/images/android-discovery.png" width="240" alt="StreamFarvis Android discovery with fictional catalog artwork, filters, and Watch now action" />
+  <img src="docs/images/android-setup.png" width="240" alt="StreamFarvis Android setup with personal TMDB token entry" />
+</p>
 
-## Why Streambert?
-- 🎦 **Streaming:** Stream any Movie, Anime or TV Series from around the World.
-- 📥 **Downloading:** Download anything you want to watch.
-- 📃 **Subtitles:** Download and manage Subtitles.
-- ⚙️ **Customizability:** Customize the Interface and Features to your unique needs.
-- 📚 **Library:** Track what you watched, save stuff you want to watch and manage your Downloads.
-- ✨ **Trending:** Discover new things to Watch every Day.
-- 🛡️ **Privacy:** Completely Ads and Tracker free, forever.
-- ⚡ **Speed:** Stream faster than any Browser can, download with multithreading.
+*Phone browser previews. Discovery uses fictional test titles and artwork; these images do not demonstrate live provider playback.*
 
-![Explore new Stuff](screenshots/trending.png)
-![Watch TV Series](screenshots/series.png)
-![Watch Movies](screenshots/movie.png)
-![Watch Anime](screenshots/anime.png)
-![Without any Ads or Trackers](screenshots/adblock.png)
-![Customize](screenshots/customize-1.png)
-![Customize](screenshots/customize-2.png)
-![Download Subtitles](screenshots/subs.png)
-![Download Everything](screenshots/download.png)
----
-[![Stargazers](https://reporoster.com/stars/dark/truelockmc/streambert)](https://github.com/truelockmc/streambert/stargazers)
----
-## Streaming
-The Application mainly gets Video Streams from VidSrc (you can also Stream from videasy and vidking). <br></br>
-It fetches Information for Images, Info Texts, Search and Homepage from [tmdb](https://www.themoviedb.org/).
+## Install
 
----
+Requires **Android 7.0 or newer**, an up-to-date Android System WebView, and an internet connection for catalog and playback services.
 
-## Downloading
-You can download those Video Streams because the Program sources Links to their .m3u8 Playlist Files ([similar to this Browser Extension](https://addons.mozilla.org/en-US/firefox/addon/m3u8-link-finder/)). <br></br>
-Once you click 'Download' these Links are used to download the Full Movie/TV Episode using [this Program](https://github.com/truelockmc/vid-dl-cli-only). You can then watch them In-App or take the Files on any Storage Medium you want.
+1. Download `StreamFarvis-1.0.0-release.apk` from the [latest release](https://github.com/FloKuersten/StreamFarvis/releases/latest).
+2. Open the APK on your phone. If Android prompts you, allow your browser or file manager to install apps from this source.
+3. Launch StreamFarvis and enter your own **TMDB API Read Access Token**. The [token guide](tmdb-tutorial.md) explains how to get one. Use the long Read Access Token, not the shorter API key.
+4. Browse or search for a title, choose a movie or episode, and tap **Open player**. Android Back returns to the app.
 
----
+No shared TMDB token is included. You can explore the interface before adding a token; loading the catalog and searching require one. Release assets include a SHA-256 checksum for the APK. Updates must use an APK signed with the same key; a separately built APK may require uninstalling the existing app, which removes its local data.
 
-## Anime
-You can also watch Anime, the App checks if a Movie or Series is an Anime and then sources its Metadata from [AniList](https://anilist.co/) instead of [tmdb](https://www.themoviedb.org/). <br></br>
-Media Files for Animes are scraped from AllManga.to (i stole this mechanic from [ani-cli](https://github.com/pystardust/ani-cli)). The App directly gets .mp4 Files and doesnt evem show you the AllManga website, you can also download these Files, just like any other Content.
+## Features
 
+- Movie and TV discovery, search, details, and season/episode selection using TMDB.
+- Local watchlist, viewing history, and manual watched markers.
+- Phone and tablet layouts, bottom navigation, and Android Back support.
+- Third-party provider playback in a separate Android WebView, with fullscreen landscape video and popup blocking.
+- Themes, accent colors, and catalog language preferences.
+- TMDB token encryption backed by Android Keystore, plus in-app cache clearing and data reset.
 
-## Requirements
+## Current limits
 
-- [Node.js](https://nodejs.org/) (>=22.12.0) installed (only if you aren't using [prebuilt Binaries](https://codeberg.org/truelockmc/streambert/releases/latest))
-- A free TMDB API Read Access Token ([Guide on how to get one](tmdb-tutorial.md))
-- For downloading, [this Program](https://github.com/truelockmc/vid-dl-cli-only/releases/latest) somewhere on your PC and [ffmpeg](https://ffmpeg.org/download.html) installed
+This is an Android port of a desktop application. Desktop downloads, local-file playback, the AllManga resolver, automatic playback-progress tracking, automatic next-episode playback, picture-in-picture, Discord presence, and the desktop updater are not included. Anime uses TMDB metadata and the available standard providers.
 
----
-## Installation
-On first launch you'll be prompted to enter your TMDB API key. ([Guide on how to get one](tmdb-tutorial.md))
-It's saved locally, you only need to do this once.
+Providers operate independently of StreamFarvis. Availability, video compatibility, subtitles, ads, and tracking can vary. Popup blocking does not reproduce Streambert's full desktop request-blocking engine. End-to-end playback across providers and physical Android devices has not been verified. Only access content you are entitled to watch.
 
-### Linux, Manual (.deb / .AppImage / .pacman)
+## Development and support
 
-Download the latest `.deb` `.pacman` or `.AppImage` from the [Releases](https://codeberg.org/truelockmc/streambert/releases/latest) page.
-```bash
-# .deb
-sudo dpkg -i streambert_*.deb
+See [development instructions](docs/DEVELOPMENT.md) for local builds, [Android notes](ANDROID.md) for implementation details, and the [design direction](docs/DESIGN.md) for the mobile UI reference and decisions. [Contributing](CONTRIBUTING.md) explains what to include in bug reports and pull requests. Report vulnerabilities privately using the [security policy](SECURITY.md).
 
-# Arch Linux (.pacman)
-sudo pacman -U streambert-*.pacman
+The interface has been checked at phone, landscape, and tablet sizes. The [validation record](docs/VALIDATION.md) distinguishes browser fixtures, native emulator checks, and unverified playback scenarios. Release notes describe the checks performed for each APK and any remaining limitations.
 
-# .AppImage (you can also do it with Gearlever)
-chmod +x Streambert-x64.AppImage && ./Streambert-x64.AppImage
-```
+## Credits and license
 
-### Windows
+StreamFarvis is based on **Streambert 2.6.0** by **truelockmc and contributors**, starting from [commit `4afe564`](https://github.com/truelockmc/streambert/commit/4afe564e5ea2565c96d6f2e61679c00fad2d498c). It retains the upstream React interface, catalog, library, theme system, artwork, and provider URL generation. The original project documentation is preserved in [docs/UPSTREAM.md](docs/UPSTREAM.md).
 
-Download the latest `Streambert Setup *.exe` from the [Releases](https://codeberg.org/truelockmc/streambert/releases/latest) page and run it.
+Distributed under **GNU GPL v3**. See [LICENSE](LICENSE). Source code is available in this repository and in the corresponding release source archive.
 
-### macOS
-Download the latest `Streambert-*-universal.dmg` from the [Releases](https://codeberg.org/truelockmc/streambert/releases/latest) page, open it and drag Streambert to your Applications folder.
-
----
-
-
-## Building from Source
-1. Install dependencies:
-```bash
-npm install
-```
-2. Build
-```bash
-npm run dist:win   
-```
-or
-```bash
-npm run dist:linux 
-```
-or (for Arch Linux)
-```bash
-npm run dist:arch
-```
-or (for an AppImage only)
-```bash
-npm run dist:appimage
-```
-or (for a .deb only)
-```bash
-npm run dist:deb
-```
-or (for a .rpm only)
-```bash
-npm run dist:rpm
-```
-or (for macOS)
-```bash
-npm run dist:mac
-```
-or (build all platforms at once)
-```bash
-npm run dist
-```
-
-> [!IMPORTANT]
-> If you are building/installing on Arch Linux and encounter errors, you may need these libraries:
-> - **libcrypt.so.1 error:** `sudo pacman -S libxcrypt-compat`
-> - **http-parser dependency error:** `yay -S http-parser` (from AUR)
-
-## License
-This project is open-source software licensed under the GNU General Public License v3.0 [(GPL-3.0)](LICENSE).
-
-Forks may be created but they MUST stay open-sourced.
-
-## Contributing
-Everyone is welcome to contribute to this project.
-Before contributing please make sure to read the [Contributing Guidelines](CONTRIBUTING.md) and act accordingly.
-
-## Privacy Disclaimer
-Streambert itself does not collect ANY data. There is no centralized service which the app relies on.
-However, the streaming sources and github (for downloading updates in-app) may still collect your data.
-
-Streambert has built-in tracker/- and adblocking, but obviously that is not perfect.
-
-## Legal Disclaimer
-
-**IMPORTANT: This application is for educational and personal use only.**
-
-- Streambert does not host, store, or distribute any copyrighted content
-- All content is sourced from third-party providers and websites
-- Users are solely responsible for ensuring they have legal rights to access any content
-- The developer does not endorse or encourage copyright infringement
-- Users must comply with all applicable laws in their jurisdiction
-- Any legal issues should be directed to the actual content providers
-- This app functions as a search engine aggregator only
-- No copyrighted material is stored on my side
-
-## Legal Notice
-
-This application is provided "as is" for educational purposes. The developer:
-- Does not claim ownership of any content
-- Does not profit from copyrighted material in any way
-- Does not control third-party content providers
-- Encourages users to support content creators through legal means
-
-[![RepoStars](https://repostars.dev/api/embed?repo=truelockmc%2Fstreambert&theme=dark)](https://repostars.dev/?repos=truelockmc%2Fstreambert&theme=dark)
-
-<details>
-    <summary>Project Structure</summary>
-    
-```
-Project Root
-├── index.html
-├── main.js
-├── package.json
-├── preload.js
-├── vite.config.js
-├── LICENSE
-├── README.md
-├── public
-│   ├── icon.png
-│   ├── installer-sidebar.bmp
-│   └── logo.svg
-├── screenshots
-│   ├── adblock.png
-│   ├── anime.png
-│   ├── api-settings_tmdb.png
-│   ├── application_tmdb.png
-│   ├── download.png
-│   ├── icon.png
-│   ├── movie.png
-│   ├── personal-use_tmdb.png
-│   ├── series.png
-│   ├── setup.png
-│   ├── signup_tmdb.png
-│   ├── subs.png
-│   ├── token_tmdb.png
-│   └── trending.png
-└── src
-    ├── App.jsx
-    ├── main.jsx
-    ├── components
-    │   ├── BlockedStatsModal.jsx
-    │   ├── CloseConfirmModal.jsx
-    │   ├── DownloadModal.jsx
-    │   ├── ErrorBoundary.jsx
-    │   ├── Icons.jsx
-    │   ├── KeyboardShortcutsModal.jsx
-    │   ├── MediaCard.jsx
-    │   ├── SearchModal.jsx
-    │   ├── SetupScreen.jsx
-    │   ├── Sidebar.jsx
-    │   ├── SubtitleDownloaderModal.jsx
-    │   ├── TrailerModal.jsx
-    │   ├── TrendingCarousel.jsx
-    │   ├── UpdateModal.jsx
-    │   └── WindowTitlebar.jsx
-    ├── ipc
-    │   ├── allmanga.js
-    │   ├── blockStats.js
-    │   ├── downloads.js
-    │   ├── player.js
-    │   ├── storage.js
-    │   └── subtitles.js
-    ├── pages
-    │   ├── DownloadsPage.jsx
-    │   ├── HomePage.jsx
-    │   ├── LibraryPage.jsx
-    │   ├── MoviePage.jsx
-    │   ├── SettingsPage.jsx
-    │   └── TVPage.jsx
-    ├── styles
-    │   ├── global.css
-    │   └── fonts
-    │       ├── bebas-neue-regular.woff2
-    │       ├── dm-sans-300.woff2
-    │       ├── dm-sans-500.woff2
-    │       ├── dm-sans-600.woff2
-    │       └── dm-sans-regular.woff2
-    └── utils
-        ├── ageRating.js
-        ├── aniSkip.js
-        ├── api.js
-        ├── appearance.js
-        ├── backup.js
-        ├── episodeMappings.js
-        ├── homeLayout.js
-        ├── storage.js
-        ├── subtitles.js
-        ├── updates.js
-        ├── useBlockedStats.js
-        └── useRatings.js
-```
-</details>
+This product uses the TMDB API but is not endorsed or certified by TMDB.

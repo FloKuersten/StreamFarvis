@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
 import MediaCard from "../components/MediaCard";
 import TrendingCarousel from "../components/TrendingCarousel";
 import { PlayIcon, StarIcon } from "../components/Icons";
@@ -7,6 +8,8 @@ import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
 import { storage } from "../utils/storage";
 import { loadHomeLayout, loadHomeViewMode } from "../utils/homeLayout";
+
+const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
 
 /**
  * Extract up to `count` unique, recently watched items from the user's
@@ -46,8 +49,11 @@ export default function HomePage({
   onMarkUnwatched,
   history,
   apiKey,
+  onSetup,
 }) {
-  const hero = trending[0];
+  const [mediaFilter, setMediaFilter] = useState("all");
+  const heroType = isAndroid && mediaFilter === "tv" ? "tv" : "movie";
+  const hero = heroType === "tv" ? trendingTV[0] : trending[0];
 
   const [recommendedItems, setRecommendedItems] = useState([]);
   const [topRatedItems, setTopRatedItems] = useState([]);
@@ -207,7 +213,24 @@ export default function HomePage({
   );
 
   return (
-    <div className="fade-in">
+    <div className={`fade-in${isAndroid ? " android-discover" : ""}`}>
+      {isAndroid && !apiKey && (
+        <section className="android-welcome">
+          <span className="android-eyebrow">ROLL THE OPENING CREDITS</span>
+          <h1>Your next<br />favorite awaits.</h1>
+          <p>Great films. One more episode.<br />A watchlist with your name on it.</p>
+          <button className="btn btn-primary" onClick={onSetup}><PlayIcon /> Set up TMDB</button>
+          <span className="android-welcome-note">Connect your free personal token to discover the catalog.</span>
+        </section>
+      )}
+      {isAndroid && apiKey && (
+        <div className="android-discovery-heading">
+          <div><span className="android-eyebrow">FIND YOUR NEXT FAVORITE</span><h1>Discover</h1></div>
+          <div className="android-discovery-tabs" role="group" aria-label="Catalog type">
+            {[["all", "For you"], ["movie", "Movies"], ["tv", "Series"]].map(([value, label]) => <button key={value} className={mediaFilter === value ? "active" : ""} aria-pressed={mediaFilter === value} onClick={() => setMediaFilter(value)}>{label}</button>)}
+          </div>
+        </div>
+      )}
       {/* ── Offline ── */}
       {offline && (
         <div
@@ -226,8 +249,7 @@ export default function HomePage({
             No internet connection
           </div>
           <div style={{ fontSize: 14, color: "var(--text3)" }}>
-            Trending and search require an internet connection. Your downloads
-            and library still work offline.
+            {isAndroid ? "Connect to the internet to discover titles. Your saved library is still available." : "Trending and search require an internet connection. Your downloads and library still work offline."}
           </div>
           <button
             className="btn btn-primary"
@@ -256,25 +278,26 @@ export default function HomePage({
           />
           <div className="hero-gradient" />
           <div className="hero-content">
-            <div className="hero-type">Trending · Movie</div>
+            <div className="hero-type">{isAndroid ? "IN THE SPOTLIGHT" : "Trending · Movie"}</div>
             <div className="hero-title">{hero.title || hero.name}</div>
             <div className="hero-meta">
               <span className="hero-rating">
                 <StarIcon /> {hero.vote_average?.toFixed(1)}
               </span>
-              <span>{hero.release_date?.slice(0, 4)}</span>
+              <span>{(hero.release_date || hero.first_air_date)?.slice(0, 4)}</span>
+              {isAndroid && <span>{heroType === "tv" ? "Series" : "Movie"}</span>}
             </div>
             <div className="hero-overview">{hero.overview}</div>
             <div className="hero-actions">
               <button
                 className="btn btn-primary"
-                onClick={() => onSelect(hero)}
+                onClick={() => onSelect(isAndroid ? { ...hero, media_type: heroType } : hero)}
               >
-                <PlayIcon /> Watch Now
+                <PlayIcon /> {isAndroid ? "Watch now" : "Watch Now"}
               </button>
               <button
                 className="btn btn-secondary"
-                onClick={() => onSelect(hero)}
+                onClick={() => onSelect(isAndroid ? { ...hero, media_type: heroType } : hero)}
               >
                 More Info
               </button>
@@ -286,13 +309,14 @@ export default function HomePage({
       {/* ── Rows in user-configured order ── */}
       {rowOrder.map((id) => {
         if (!rowVisible[id]) return null;
+        if (isAndroid && ((mediaFilter === "movie" && id === "trendingTV") || (mediaFilter === "tv" && id === "trendingMovies"))) return null;
 
         if (id === "continue") {
           if (inProgress.length === 0) return null;
           return (
             <div key="continue" className="section">
               <div className="section-title">Continue Watching</div>
-              <div className="cards-grid">
+              <div className={isAndroid ? "android-poster-rail" : "cards-grid"}>
                 {inProgress.map((item) => {
                   const pk =
                     item.media_type === "movie"
@@ -321,9 +345,10 @@ export default function HomePage({
 
         // Render a section as a flat cards-grid (list view)
         const renderList = (key, title, titleHighlight, items) => {
+          if (isAndroid && mediaFilter !== "all") items = items.filter((item) => (item.media_type || "movie") === mediaFilter);
           if (!items || items.length === 0) return null;
           return (
-            <div key={key} className="section">
+            <div key={key} className={`section${isAndroid ? " android-media-section" : ""}`}>
               <div className="section-title">
                 {titleHighlight ? (
                   <>
@@ -336,7 +361,7 @@ export default function HomePage({
                   title
                 )}
               </div>
-              <div className="cards-grid">
+              <div className={isAndroid ? "android-poster-rail" : "cards-grid"}>
                 {items.map((item) => {
                   const type = item.media_type === "tv" ? "tv" : "movie";
                   const rk = `${type}_${item.id}`;
@@ -362,7 +387,7 @@ export default function HomePage({
 
         if (id === "recommended") {
           if (filteredRecommendedItems.length === 0) return null;
-          if (viewMode === "list")
+          if (isAndroid || viewMode === "list")
             return renderList(
               "recommended",
               "Recommended for You",
@@ -382,7 +407,7 @@ export default function HomePage({
 
         if (id === "trendingMovies") {
           if (trendingMovieItems.length === 0) return null;
-          if (viewMode === "list")
+          if (isAndroid || viewMode === "list")
             return renderList(
               "trendingMovies",
               "Trending Movies",
@@ -402,7 +427,7 @@ export default function HomePage({
 
         if (id === "trendingTV") {
           if (trendingTVItems.length === 0) return null;
-          if (viewMode === "list")
+          if (isAndroid || viewMode === "list")
             return renderList(
               "trendingTV",
               "Trending Series",
@@ -422,7 +447,7 @@ export default function HomePage({
 
         if (id === "topRated") {
           if (topRatedItems.length === 0) return null;
-          if (viewMode === "list")
+          if (isAndroid || viewMode === "list")
             return renderList("topRated", "Top Rated", null, topRatedItems);
           return (
             <TrendingCarousel

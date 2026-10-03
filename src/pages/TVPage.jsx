@@ -47,6 +47,8 @@ import {
   PopOutIcon,
 } from "../components/Icons";
 import DownloadModal from "../components/DownloadModal";
+import AndroidPlayer from "../components/AndroidPlayer";
+import { IS_ANDROID, getAndroidSource } from "../utils/android";
 import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
@@ -397,7 +399,9 @@ export default function TVPage({
   const [m3u8Url, setM3u8Url] = useState(null);
   const [interceptedSubs, setInterceptedSubs] = useState([]);
   const [playerSource, setPlayerSource] = useState(
-    () => storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
+    () => IS_ANDROID
+      ? getAndroidSource(storage.get("androidPlayerSource"))
+      : storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
   );
   // Accent colour + subtitle lang come from App-level state (via props),
   // so they are always fresh after Settings save without any extra storage reads.
@@ -551,7 +555,8 @@ export default function TVPage({
   // ── Fetch episode group mapping if this show has one ─────────────────────
   useEffect(() => {
     const groupId = EPISODE_GROUP_IDS[Number(item.id)];
-    if (!groupId || !apiKey) {
+    // Android providers use the regular TMDB season/episode coordinates.
+    if (IS_ANDROID || !groupId || !apiKey) {
       setEpisodeGroupData(null);
       setEpisodeGroupMap(null);
       return;
@@ -617,7 +622,7 @@ export default function TVPage({
     setSeasonData(null); // clear stale episodes immediately
     // AniList virtual seasons on a single-season show: always fetch TMDB S1.
     const tmdbSeasonToFetch =
-      isAnime && anilistSeasons?.length > 0 && tmdbSeasons.length <= 1
+      !IS_ANDROID && isAnime && anilistSeasons?.length > 0 && tmdbSeasons.length <= 1
         ? 1
         : selectedSeason;
     let mounted = true;
@@ -674,7 +679,7 @@ export default function TVPage({
           if (data) {
             setAnilistData(data);
             const seasons = buildAnilistSeasons(data);
-            if (seasons?.length) setAnilistSeasons(seasons);
+            if (!IS_ANDROID && seasons?.length) setAnilistSeasons(seasons);
           }
           if (mounted) setAnilistLoading(false);
         })
@@ -683,7 +688,7 @@ export default function TVPage({
         });
       // Switch to anime source if current source is not an anime source
       const currentSrc = PLAYER_SOURCES.find((s) => s.id === playerSource);
-      if (!currentSrc?.tag) {
+      if (!IS_ANDROID && !currentSrc?.tag) {
         const saved = storage.get("playerSource");
         const savedSrc = PLAYER_SOURCES.find((s) => s.id === saved);
         setPlayerSource(savedSrc?.tag ? saved : ANIME_DEFAULT_SOURCE);
@@ -692,7 +697,7 @@ export default function TVPage({
       setAnilistLoading(false);
       // Switch back to non-anime source if current source is anime-only
       const currentSrc = PLAYER_SOURCES.find((s) => s.id === playerSource);
-      if (currentSrc?.tag) {
+      if (!IS_ANDROID && currentSrc?.tag) {
         const saved = storage.get("playerSource");
         const savedSrc = PLAYER_SOURCES.find((s) => s.id === saved);
         setPlayerSource(!savedSrc?.tag ? saved : NON_ANIME_DEFAULT_SOURCE);
@@ -705,7 +710,7 @@ export default function TVPage({
 
   // Resolve allmanga episode URL via main-process IPC (GraphQL, no CORS)
   useEffect(() => {
-    if (!playing || !selectedEp) return;
+    if (IS_ANDROID || !playing || !selectedEp) return;
     const epNum = selectedEp.episode_number;
     const epKey = `tv_${item.id}_s${selectedSeason}_e${epNum}_${dubMode}`;
 
@@ -799,7 +804,7 @@ export default function TVPage({
   }, [playing, selectedEp, playerSource, selectedSeason, dubMode]);
 
   useEffect(() => {
-    if (!window.electron) return;
+    if (IS_ANDROID || !window.electron) return;
     const handler = window.electron.onM3u8Found((url) => {
       setM3u8Url((prev) => (prev !== url ? url : prev));
     });
@@ -827,7 +832,7 @@ export default function TVPage({
   }, [showSourceMenu]);
 
   useEffect(() => {
-    if (!window.electron) return;
+    if (IS_ANDROID || !window.electron) return;
     const handler = window.electron.onSubtitleFound(({ url, lang }) => {
       if (!url || !url.toLowerCase().includes(".vtt")) return;
       setInterceptedSubs((prev) => {
@@ -852,14 +857,14 @@ export default function TVPage({
   // tmdbSeasonsWithSpecials includes season 0 for display purposes.
   // Excluded for anime: AllManga
   const tmdbSeasonsWithSpecials = useMemo(() => {
-    if (isAnime) return tmdbSeasons;
+    if (!IS_ANDROID && isAnime) return tmdbSeasons;
     if (failedSeasons.has(0)) return tmdbSeasons;
     const specials = (d.seasons || []).filter((s) => s.season_number === 0);
     return [...tmdbSeasons, ...specials];
   }, [d.seasons, tmdbSeasons, isAnime, failedSeasons]);
   const useAnilistSeasons = useMemo(
     () =>
-      isAnime &&
+      !IS_ANDROID && isAnime &&
       anilistSeasons?.length > 0 &&
       (tmdbSeasons.length <= 1 || anilistSeasons.length > tmdbSeasons.length),
     [isAnime, anilistSeasons, tmdbSeasons],
@@ -935,6 +940,9 @@ export default function TVPage({
   // ── Player episode mapping
   const playerEp = useMemo(() => {
     if (!selectedEp) return { season: selectedSeason, episode: undefined };
+    if (IS_ANDROID) {
+      return { season: selectedSeason, episode: selectedEp.episode_number };
+    }
     // In episode-group mode: use the real TMDB season/episode stored on the ep
     const rawSeason = selectedEp._tmdbSeason ?? selectedSeason;
     const rawEpisode = selectedEp._tmdbAbsolute ?? selectedEp.episode_number;
@@ -945,7 +953,7 @@ export default function TVPage({
   // While episode group or AniList data is still loading, return [] to prevent
   // a flash of wrong TMDB episodes before the correct data arrives.
   const episodeGroupPending = useMemo(
-    () => !!EPISODE_GROUP_IDS[Number(item.id)] && !episodeGroupData,
+    () => !IS_ANDROID && !!EPISODE_GROUP_IDS[Number(item.id)] && !episodeGroupData,
     [item.id, episodeGroupData],
   );
   const currentSeasonEpisodes = useMemo(() => {
@@ -1140,7 +1148,7 @@ export default function TVPage({
   // webview is still attached when we navigate it to about:blank.
   // This lets Chromium unload the streaming page.
   useLayoutEffect(() => {
-    if (playing) return; // only act when playing stops
+    if (IS_ANDROID || playing) return; // only act when playing stops
     const wv = webviewRef.current;
     if (wv) {
       try {
@@ -1151,6 +1159,7 @@ export default function TVPage({
 
   // On unmount: signal main process to destroy the player WebContents and flush session cahce
   useEffect(() => {
+    if (IS_ANDROID) return;
     return () => {
       window.electron?.playerStopped?.();
     };
@@ -1159,7 +1168,7 @@ export default function TVPage({
   // Attach webview load events so we know when the new source has painted.
   // Also poll for video duration so AniSkip markers appear without waiting for the 5s progress tick.
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     const wv = webviewRef.current;
     if (!wv) return;
     const done = () => setWebviewLoading(false);
@@ -1256,7 +1265,7 @@ export default function TVPage({
       introSkipMode !== "off" && playing && !!skipTimings && isAsync;
 
     if (!aniSkipActive) setSkipPrompt(null);
-    if (!playing || !currentProgressKey) return;
+    if (IS_ANDROID || !playing || !currentProgressKey) return;
 
     const TICK = aniSkipActive ? 1000 : 5000;
     let tickCount = 0;
@@ -1480,7 +1489,7 @@ export default function TVPage({
   }, []);
 
   useEffect(() => {
-    setPlayerGamepadActive(gamepadEnabled && playing);
+    setPlayerGamepadActive(!IS_ANDROID && gamepadEnabled && playing);
     return () => setPlayerGamepadActive(false);
   }, [playing, gamepadEnabled]);
 
@@ -1539,6 +1548,23 @@ export default function TVPage({
     [d, selectedSeason, onHistory],
   );
 
+  useEffect(() => {
+    if (!IS_ANDROID) return;
+    const handleBack = (event) => {
+      if (event.defaultPrevented) return;
+      if (showTrailer || epMenu || seasonMenu || playing) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (showTrailer) setShowTrailer(false);
+        else if (epMenu) setEpMenu(null);
+        else if (seasonMenu) setSeasonMenu(null);
+        else setPlaying(false);
+      }
+    };
+    window.addEventListener("streamfarvis:back-overlay", handleBack);
+    return () => window.removeEventListener("streamfarvis:back-overlay", handleBack);
+  }, [showTrailer, epMenu, seasonMenu, playing]);
+
   const nextEp = useMemo(() => {
     if (!selectedEp || !currentSeasonEpisodes) return null;
     const idx = currentSeasonEpisodes.findIndex(
@@ -1582,7 +1608,7 @@ export default function TVPage({
   // the native Fullscreen API which would otherwise fullscreen the entire app).
   // Videasy and AllManga handle fullscreen internally via CSS, skip those.
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     if (!NEEDS_INTERCEPT.includes(playerSource)) return;
     const enterH = window.electron?.onWebviewEnterFullscreen?.(() => {
       // requestFullscreen() is rejected when Electron is already in fullscreen -> use css overlay
@@ -1604,7 +1630,7 @@ export default function TVPage({
 
   // ── PiP pop-out: navigate main webview away so only one stream is active ──
   useEffect(() => {
-    if (!playing) return;
+    if (IS_ANDROID || !playing) return;
     const openH = window.electron?.onPipOpened?.(async () => {
       setPipOpen(true);
       pipWebContentsIdRef.current =
@@ -1783,6 +1809,18 @@ export default function TVPage({
                   </button>
                 )}
               </div>
+              {IS_ANDROID ? (
+                <AndroidPlayer
+                  title={title}
+                  subtitle={`Season ${selectedSeason} · Episode ${selectedEp.episode_number} · ${selectedEp.name || ""}`}
+                  sourceId={playerSource}
+                  onSourceChange={(source) => {
+                    setPlayerSource(source);
+                    storage.set("androidPlayerSource", source);
+                  }}
+                  url={getSourceUrl(playerSource, "tv", item.id, playerEp.season, playerEp.episode, {}, playerAccentColor, playerSubLang)}
+                />
+              ) : (
               <div
                 className={`player-wrap${playerFullscreen ? " player-wrap--fullscreen" : ""}`}
                 ref={playerWrapRef}
@@ -2334,6 +2372,8 @@ export default function TVPage({
                 )}
               </div>
 
+              )}
+
               {currentProgressKey &&
                 (() => {
                   const epPct = progress[currentProgressKey] || 0;
@@ -2556,7 +2596,7 @@ export default function TVPage({
         />
       )}
 
-      {showDownload && (
+      {!IS_ANDROID && showDownload && (
         <DownloadModal
           onClose={() => setShowDownload(false)}
           m3u8Url={m3u8Url}
@@ -2654,7 +2694,7 @@ const EpisodeCard = memo(function EpisodeCard({
         ) : isPlaying ? (
           <div className="episode-playing-badge">
             <span className="episode-playing-dot" />
-            Playing
+            {IS_ANDROID ? "Selected" : "Playing"}
           </div>
         ) : (
           <div className="episode-thumb-play">
@@ -2669,7 +2709,7 @@ const EpisodeCard = memo(function EpisodeCard({
         >
           E{ep.episode_number}
           {epWatched && <WatchedIcon size={14} />}
-          {epDownload && (
+          {!IS_ANDROID && epDownload && (
             <span
               className="ep-downloaded-badge"
               title={

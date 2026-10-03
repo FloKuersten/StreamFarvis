@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">StreamFarvis</string>
+    <string name="title_activity_main">StreamFarvis</string>
+    <string name="package_name">com.farvis.streamfarvis</string>
+    <string name="custom_url_scheme">com.farvis.streamfarvis</string>
+</resources>

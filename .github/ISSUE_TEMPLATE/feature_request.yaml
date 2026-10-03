@@ -1,78 +1,33 @@
-name: Feature Request
-description: Suggest an idea for Streambert which you would like to see in a future release
+name: Android feature request
+description: Suggest a focused improvement to StreamFarvis.
 title: "[Feature]: "
 labels: ["enhancement"]
-
 body:
   - type: markdown
     attributes:
       value: |
-        **README: Before You Submit Your Issue**
-        - Issues are not a place to go ask support questions or start discussions.
-        - Please use discussions instead: https://github.com/truelockmc/streambert/discussions
-
-  - type: checkboxes
-    attributes:
-      label: Guidelines
-      description: Please ensure you've completed all of the following.
-      options:
-        - label: I have searched the issue tracker and found no similar feature request
-          required: true
-        - label: I have checked the documentation and found no existing solution
-          required: true
-        - label: This issue contains only one feature request
-          required: true
-
+        Read the [current Android limits](https://github.com/FloKuersten/StreamFarvis#current-limits) and check existing issues before submitting.
   - type: textarea
+    id: problem
     attributes:
-      label: Problem Description
-      description: What problem are you trying to solve?
+      label: What problem would this solve?
+      description: Describe the situation and what currently makes it difficult.
     validations:
       required: true
-
   - type: textarea
+    id: proposal
     attributes:
-      label: Proposed Solution
-      description: Describe your idea clearly
+      label: Suggested behavior
+      description: Describe the result you would like. Screenshots or sketches can be attached here.
     validations:
       required: true
-
   - type: textarea
+    id: alternatives
     attributes:
-      label: Alternatives Considered
-      description: Any alternative solutions?
-    validations:
-      required: true
-
-  - type: dropdown
-    attributes:
-      label: Feature Type
-      multiple: true
-      options:
-        - improvement to existing feature
-        - new feature
-        - UI / UX improvement
-        - performance improvement
-        - integration / external support
-    validations:
-      required: true
-
+      label: Alternatives or workarounds
+      description: Optional; include anything you have already tried.
   - type: input
+    id: environment
     attributes:
-      label: Streambert Version
-      description: Which version are you using?
-      placeholder: v2.2.1
-    validations:
-      required: true
-
-  - type: upload
-    attributes:
-      label: Screenshots / Mockups
-      description: Optional, but helps explain the idea
-    validations:
-      required: false
-
-  - type: textarea
-    attributes:
-      label: Additional Information
-      description: Add any other context here
+      label: App version and Android device
+      placeholder: "1.0.0, Pixel 7, Android 15"

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { imgUrl } from "../utils/api";
 import { useSeasonalEvent } from "../components/seasonalEvents.jsx";
 import {
@@ -13,6 +14,8 @@ import {
   BackIcon,
   HelpIcon,
 } from "./Icons";
+
+const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
 
 export default function Sidebar({
   page,
@@ -99,6 +102,17 @@ export default function Sidebar({
   const handleMouseLeave = () => {
     setTooltip(null);
   };
+
+  if (isAndroid) {
+    return (
+      <nav className="android-nav" aria-label="Main navigation">
+        <MobileNavButton active={page === "home"} onClick={() => onNavigate("home")} icon={<HomeIcon />} label="Home" />
+        <MobileNavButton onClick={onSearch} icon={<SearchIcon />} label="Search" />
+        <MobileNavButton active={page === "history"} onClick={() => onNavigate("history")} icon={<HistoryIcon />} label="Library" />
+        <MobileNavButton active={page === "settings"} onClick={() => onNavigate("settings")} icon={<SettingsIcon />} label="Settings" />
+      </nav>
+    );
+  }
 
   return (
     <div className="sidebar">
@@ -239,6 +253,14 @@ export default function Sidebar({
         </button>
       </div>
     </div>
+  );
+}
+
+function MobileNavButton({ active, onClick, icon, label }) {
+  return (
+    <button className={`android-nav-button${active ? " active" : ""}`} onClick={onClick} aria-current={active ? "page" : undefined}>
+      {icon}<span>{label}</span>
+    </button>
   );
 }
 

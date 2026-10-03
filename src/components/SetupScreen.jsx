@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { StreambertLogo, PlayIcon } from "./Icons";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
+const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
 
 async function validateToken(token) {
   // Step 1: Can we reach TMDB at all?
@@ -78,7 +80,8 @@ function ExternalLink({ href, className, children }) {
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        window.electron.openExternal(href);
+        if (window.electron?.openExternal) window.electron.openExternal(href);
+        else window.open(href, "_blank", "noopener,noreferrer");
       }}
     >
       {children}
@@ -86,14 +89,15 @@ function ExternalLink({ href, className, children }) {
   );
 }
 
-export default function SetupScreen({ onSave, onSkip }) {
+export default function SetupScreen({ onSave, onSkip, storageError }) {
   const [key, setKey] = useState("");
   const [checking, setChecking] = useState(false);
-  const [error, setError] = useState(null); // { title, body }
+  const [error, setError] = useState(() => storageError ? { title: "Secure storage unavailable", body: storageError } : null);
   const inputRef = useRef(null);
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
+    if (isAndroid) return;
     const t = setTimeout(() => {
       window.focus();
       inputRef.current?.focus();
@@ -107,13 +111,43 @@ export default function SetupScreen({ onSave, onSkip }) {
     setChecking(true);
     setError(null);
     const result = await validateToken(token);
-    setChecking(false);
     if (result.ok) {
-      onSave(token);
+      try {
+        await onSave(token);
+      } catch {
+        setError({ title: "Could not save token", body: "Secure storage is unavailable. Please try again." });
+      }
     } else {
       setError(errorMessage(result.reason, result.status));
     }
+    setChecking(false);
   };
+
+  if (isAndroid) {
+    return (
+      <div className="apikey-modal android-onboarding">
+        <div className="apikey-box android-onboarding-inner">
+          <header className="android-setup-brand"><span className="android-wordmark">Stream<span>Farvis</span></span><span className="android-setup-edition">YOUR PERSONAL CINEMA</span></header>
+          <div className="android-setup-story">
+            <span className="android-eyebrow">THE NEXT GREAT WATCH</span>
+            <h1>Make it<br /><em>a movie night.</em></h1>
+            <p>Discover a new favorite.<br />Keep every must-watch in one place.</p>
+            <div className="android-setup-categories" aria-label="Catalog features"><span>Movies</span><span>Series</span><span>Your watchlist</span></div>
+          </div>
+          <div className="android-setup-form">
+            <label htmlFor="android-tmdb-token">Connect your catalog</label>
+            <p className="android-setup-form-help">Paste your personal TMDB Read Access Token to get started.</p>
+            <input id="android-tmdb-token" aria-label="TMDB Read Access Token" type="password" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" className={`apikey-input${error ? " apikey-input-error" : ""}`} placeholder="TMDB Read Access Token" value={key} onChange={(event) => { setKey(event.target.value); setError(null); }} onKeyDown={(event) => event.key === "Enter" && !checking && handleSubmit()} ref={inputRef} disabled={checking} />
+            {error && <div className="apikey-error-box" role="alert"><div className="apikey-error-title">{error.title}</div><div className="apikey-error-body">{error.body}</div></div>}
+            <button className="btn btn-primary android-setup-submit" onClick={handleSubmit} disabled={!key.trim() || checking}>{checking ? <><span className="apikey-spinner" /> Checking…</> : <><PlayIcon /> Let's go</>}</button>
+            <details className="android-token-help"><summary>Need a free TMDB token?</summary><p>Open <ExternalLink href="https://www.themoviedb.org/settings/api">TMDB Settings → API</ExternalLink> and copy the long <strong>API Read Access Token</strong>, not the shorter API key. Your token is saved securely on this device.</p><ExternalLink href="https://github.com/FloKuersten/StreamFarvis/blob/main/tmdb-tutorial.md">Read the setup guide ↗</ExternalLink></details>
+            {onSkip && <button className="android-skip-setup" onClick={onSkip}>Explore the app first <span aria-hidden="true">→</span></button>}
+          </div>
+          <p className="android-setup-attribution">Based on Streambert · GPL-3.0</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="apikey-modal">
@@ -121,7 +155,8 @@ export default function SetupScreen({ onSave, onSkip }) {
         <div className="apikey-logo">
           <StreambertLogo />
         </div>
-        <div className="apikey-title">STREAMBERT</div>
+        <div className="apikey-title">{isAndroid ? "STREAMFARVIS" : "STREAMBERT"}</div>
+        {isAndroid && <p className="android-setup-caption">Your movies. Your watchlist. On Android.</p>}
         <p className="apikey-sub">
           Enter your <strong>free</strong> TMDB{" "}
           <strong>Read Access Token</strong> to get started.
@@ -144,6 +179,13 @@ export default function SetupScreen({ onSave, onSkip }) {
           </ExternalLink>
         </p>
         <input
+          aria-label="TMDB Read Access Token"
+          type="password"
+          autoComplete="off"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="go"
           className={`apikey-input${error ? " apikey-input-error" : ""}`}
           placeholder="Paste your TMDB Read Access Token (eyJ...)..."
           value={key}
@@ -208,9 +250,10 @@ export default function SetupScreen({ onSave, onSkip }) {
             onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text2)")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text3)")}
           >
-            Skip for now
+            {isAndroid ? "Explore the app first" : "Skip for now"}
           </button>
         )}
+        {isAndroid && <p className="android-setup-attribution">Based on Streambert · GPL-3.0<br />A personal TMDB token is required to load the catalog.</p>}
       </div>
     </div>
   );

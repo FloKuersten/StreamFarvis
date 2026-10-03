@@ -1,0 +1,65 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - run: npm ci
+      - name: Install browser for UI tests
+        run: npx playwright install --with-deps chromium
+      - name: Test Android browser interface
+        run: |
+          mkdir -p artifacts/ui-smoke
+          npm run dev:android -- --port 5175 --strictPort > artifacts/ui-smoke/vite.log 2>&1 &
+          VITE_PID=$!
+          trap 'kill "$VITE_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:5175/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail http://127.0.0.1:5175/ > /dev/null
+          npm run test:android:ui
+      - run: npm run android:sync
+      - name: Build and test Android
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StreamFarvis-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-check-reports
+          path: |
+            android/app/build/reports/tests/
+            android/app/build/reports/lint-results-debug.*
+            artifacts/ui-smoke/

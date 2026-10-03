@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { CloseIcon, ExternalLinkIcon } from "./Icons";
 import { storage } from "../utils/storage";
+import { IS_ANDROID } from "../utils/android";
 
 export const DEFAULT_INVIDIOUS_BASE = "https://inv.nadeko.net";
 
@@ -59,7 +60,33 @@ const SETUP_JS = `
 })()
 `;
 
-export default function TrailerModal({ trailerKey, title, onClose }) {
+export default function TrailerModal(props) {
+  return IS_ANDROID ? <AndroidTrailer {...props} /> : <DesktopTrailer {...props} />;
+}
+
+function AndroidTrailer({ trailerKey, title, onClose }) {
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const back = (event) => { event.preventDefault(); event.stopImmediatePropagation(); onClose(); };
+    window.addEventListener("streamfarvis:back-overlay", back, true);
+    return () => window.removeEventListener("streamfarvis:back-overlay", back, true);
+  }, [onClose]);
+  return <div className="trailer-overlay" onClick={onClose} role="presentation">
+    <section className="trailer-modal" role="dialog" aria-modal="true" aria-label={`${title} trailer`} onClick={(event) => event.stopPropagation()}>
+      <div className="trailer-modal-header"><strong>{title} — Trailer</strong><button className="btn btn-ghost" onClick={onClose} aria-label="Close trailer"><CloseIcon /></button></div>
+      <div style={{ padding: 24 }}>
+        <p>Watch the official trailer in YouTube or your browser.</p>
+        <button className="btn btn-primary" onClick={async () => {
+          try { await window.electron.openExternal(`https://www.youtube.com/watch?v=${encodeURIComponent(trailerKey)}`); }
+          catch { setError("Unable to open the trailer. Install a browser and try again."); }
+        }}>Open trailer</button>
+        {error && <p role="alert">{error}</p>}
+      </div>
+    </section>
+  </div>;
+}
+
+function DesktopTrailer({ trailerKey, title, onClose }) {
   const webviewRef = useRef(null);
   const [currentSrc, setCurrentSrc] = useState(null);
   const [statusMsg, setStatusMsg] = useState("Loading trailer…");

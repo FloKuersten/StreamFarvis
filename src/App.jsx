@@ -8,6 +8,7 @@ import {
   Suspense,
 } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Capacitor } from "@capacitor/core";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import WindowTitlebar from "./components/WindowTitlebar";
 import { storage, secureStorage, STORAGE_KEYS } from "./utils/storage";
@@ -30,6 +31,7 @@ import {
 import Sidebar from "./components/Sidebar";
 import SearchModal from "./components/SearchModal";
 import SetupScreen from "./components/SetupScreen";
+import { BackIcon, SearchIcon } from "./components/Icons";
 import CloseConfirmModal from "./components/CloseConfirmModal";
 import UpdateModal from "./components/UpdateModal";
 import { useGamepadNav } from "./utils/useGamepadNav";
@@ -40,19 +42,26 @@ const MoviePage = lazy(() => import("./pages/MoviePage"));
 const TVPage = lazy(() => import("./pages/TVPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const AndroidSettingsPage = lazy(() => import("./pages/AndroidSettingsPage"));
 const DownloadsPage = lazy(() => import("./pages/DownloadsPage"));
 import {
   checkForUpdatesWithFallback,
   DEFAULT_UPDATE_SOURCE,
 } from "./utils/updates";
 
+const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
+
 export default function App() {
   // apiKey loaded async from secure storage (OS keychain)
   const [apiKey, setApiKey] = useState(null);
   const [apiKeyLoaded, setApiKeyLoaded] = useState(false);
+  const [storageError, setStorageError] = useState(null);
   const [skipped, setSkipped] = useState(false);
   const [apiKeyStatus, setApiKeyStatus] = useState("checking"); // 'checking' | 'ok' | 'invalid_token' | 'unreachable'
-  const [page, setPage] = useState(() => storage.get("startPage") || "home");
+  const [page, setPage] = useState(() => {
+    const startPage = storage.get("startPage") || "home";
+    return isAndroid && !["home", "history", "settings"].includes(startPage) ? "home" : startPage;
+  });
   const [selected, setSelected] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [dlSearchOpen, setDlSearchOpen] = useState(false);
@@ -141,7 +150,7 @@ export default function App() {
 
   // ── Startup update check ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!storage.get("autoCheckUpdates")) return;
+    if (isAndroid || !storage.get("autoCheckUpdates")) return;
     const source =
       storage.get(STORAGE_KEYS.UPDATE_SOURCE) || DEFAULT_UPDATE_SOURCE;
     checkForUpdatesWithFallback(source)
@@ -339,11 +348,16 @@ export default function App() {
   // ── Load API key from secure storage on startup ──
   useEffect(() => {
     let mounted = true;
-    secureStorage.get("apikey").then((val) => {
-      if (!mounted) return;
-      setApiKey(val || null);
-      setApiKeyLoaded(true);
-    });
+    secureStorage.get("apikey")
+      .then((val) => {
+        if (mounted) setApiKey(val || null);
+      })
+      .catch(() => {
+        if (mounted) setStorageError("Your saved token could not be read. Try entering it again to restore access.");
+      })
+      .finally(() => {
+        if (mounted) setApiKeyLoaded(true);
+      });
     return () => {
       mounted = false;
     };
@@ -367,7 +381,7 @@ export default function App() {
 
   // Listen for close confirmation request from main process
   useEffect(() => {
-    if (!window.electron) return;
+    if (isAndroid || !window.electron?.onConfirmClose) return;
     const handler = window.electron.onConfirmClose((data) =>
       setCloseConfirm(data),
     );
@@ -409,7 +423,7 @@ export default function App() {
 
   // Load persisted downloads on startup + immediately prune missing files
   useEffect(() => {
-    if (!window.electron) return;
+    if (isAndroid || !window.electron?.getDownloads) return;
     let mounted = true;
     window.electron.getDownloads().then(async (list) => {
       if (!mounted || !Array.isArray(list)) return;
@@ -447,7 +461,7 @@ export default function App() {
 
   // Listen for live progress events from main process
   useEffect(() => {
-    if (!window.electron) return;
+    if (isAndroid || !window.electron?.onDownloadProgress) return;
     const handler = window.electron.onDownloadProgress((update) => {
       // ── Desktop notification ──────────────────────
       if (
@@ -675,6 +689,8 @@ export default function App() {
   }, []);
 
   const navigate = useCallback((pg, data = null) => {
+    if (isAndroid && pg === "downloads") return;
+    if (pg === pageRef.current && data === selectedRef.current) return;
     setNavStack((prev) => [
       ...prev,
       { page: pageRef.current, selected: selectedRef.current },
@@ -690,6 +706,7 @@ export default function App() {
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
+    if (isAndroid) return;
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "f") {
         e.preventDefault();
@@ -726,6 +743,36 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, [navigateBack]);
 
+  // Give page overlays a separate, synchronous chance to consume native Back.
+  // A window-target event alone cannot enforce parent/child listener priority.
+  useEffect(() => {
+    if (!isAndroid) return;
+    const handler = (event) => {
+      if (event.defaultPrevented) return;
+      const overlayEvent = new CustomEvent("streamfarvis:back-overlay", { cancelable: true });
+      if (!window.dispatchEvent(overlayEvent)) {
+        event.preventDefault();
+        return;
+      }
+      if (showSearch) {
+        event.preventDefault();
+        setShowSearch(false);
+      } else if (!apiKey && !skipped) {
+        event.preventDefault();
+        setSkipped(true);
+      } else if (navStack.length > 0) {
+        event.preventDefault();
+        navigateBack();
+      } else if (page !== "home") {
+        event.preventDefault();
+        setSelected(null);
+        setPage("home");
+      }
+    };
+    window.addEventListener("streamfarvis:back", handler);
+    return () => window.removeEventListener("streamfarvis:back", handler);
+  }, [apiKey, skipped, showSearch, navStack.length, navigateBack, page]);
+
   // ── Controller / gamepad navigation ─────────────────────────────────────
   const [gamepadEnabled, setGamepadEnabled] = useState(
     () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false, // default on
@@ -742,7 +789,7 @@ export default function App() {
   }, []);
   const gamepadToastedRef = useRef(false);
   const { connected: gamepadConnected } = useGamepadNav({
-    enabled: gamepadEnabled,
+    enabled: !isAndroid && gamepadEnabled,
     onBack: navigateBack,
     onOpenSearch: () => setShowSearch(true),
   });
@@ -778,8 +825,9 @@ export default function App() {
     [navigate],
   );
 
-  const saveApiKey = useCallback((key) => {
-    secureStorage.set("apikey", key);
+  const saveApiKey = useCallback(async (key) => {
+    await secureStorage.set("apikey", key);
+    setStorageError(null);
     setApiKey(key);
   }, []);
 
@@ -987,9 +1035,9 @@ export default function App() {
 
   if (!apiKeyLoaded) return null; // wait for secure storage to resolve
   if (!apiKey && !skipped)
-    return <SetupScreen onSave={saveApiKey} onSkip={() => setSkipped(true)} />;
+    return <SetupScreen onSave={saveApiKey} onSkip={() => setSkipped(true)} storageError={storageError} />;
 
-  const hasCustomTitlebar = platform === "win32" || platform === "linux";
+  const hasCustomTitlebar = !isAndroid && (platform === "win32" || platform === "linux");
 
   return (
     <ErrorBoundary>
@@ -998,7 +1046,7 @@ export default function App() {
         <Sidebar
           page={page}
           onNavigate={navigate}
-          onSearch={() => setShowSearch(true)}
+          onSearch={() => isAndroid && !apiKey ? setSkipped(false) : setShowSearch(true)}
           savedList={savedList}
           activeDownloads={activeDownloadCount}
           onReorderSaved={handleReorderSaved}
@@ -1008,7 +1056,22 @@ export default function App() {
           onShowShortcuts={() => setShowShortcuts(true)}
         />
 
-        <div className="main">
+        <div className={`main${isAndroid ? ` android-page-${page}` : ""}`}>
+          {isAndroid && (
+            <header className="android-header">
+              <div className="android-header-brand">
+                {navStack.length > 0 && <button className="android-header-icon" onClick={navigateBack} aria-label="Go back"><BackIcon /></button>}
+                <span className="android-wordmark">Stream<span>Farvis</span></span>
+              </div>
+              <button className="android-header-icon" onClick={() => !apiKey ? setSkipped(false) : setShowSearch(true)} aria-label="Search catalog"><SearchIcon /></button>
+            </header>
+          )}
+          {isAndroid && !apiKey && page !== "home" && page !== "settings" && (
+            <div className="api-status-banner android-token-banner">
+              <span>Add your free TMDB Read Access Token to browse movies and series.</span>
+              <button className="api-status-btn" onClick={changeApiKey}>Set up TMDB</button>
+            </div>
+          )}
           {/* ── API key status banner ── */}
           {/* Suspense boundary: lazy page chunks are fetched on first visit */}
           {apiKeyStatus === "invalid_token" && (
@@ -1048,7 +1111,7 @@ export default function App() {
                   fontSize: 15,
                 }}
               >
-                Laden…
+                Loading…
               </div>
             }
           >
@@ -1067,6 +1130,7 @@ export default function App() {
                 onMarkUnwatched={markUnwatched}
                 history={history}
                 apiKey={apiKey}
+                onSetup={changeApiKey}
               />
             )}
             {page === "movie" && selected && (
@@ -1079,7 +1143,7 @@ export default function App() {
                 onHistory={addHistory}
                 progress={progress}
                 saveProgress={saveProgress}
-                onBack={() => navigate("home")}
+                onBack={() => isAndroid && navStack.length ? navigateBack() : navigate("home")}
                 onSettings={(section) =>
                   navigate("settings", { section: section || null })
                 }
@@ -1102,7 +1166,7 @@ export default function App() {
                 onHistory={addHistory}
                 progress={progress}
                 saveProgress={saveProgress}
-                onBack={() => navigate("home")}
+                onBack={() => isAndroid && navStack.length ? navigateBack() : navigate("home")}
                 onSettings={(section) =>
                   navigate("settings", { section: section || null })
                 }
@@ -1128,14 +1192,17 @@ export default function App() {
                 onRemoveHistory={removeHistory}
               />
             )}
-            {page === "settings" && (
+            {page === "settings" && isAndroid && (
+              <AndroidSettingsPage apiKey={apiKey} onChangeApiKey={changeApiKey} />
+            )}
+            {page === "settings" && !isAndroid && (
               <SettingsPage
                 apiKey={apiKey}
                 onChangeApiKey={changeApiKey}
                 initialSection={selected?.section}
               />
             )}
-            {page === "downloads" && (
+            {!isAndroid && page === "downloads" && (
               <DownloadsPage
                 downloads={downloads}
                 onDeleteDownload={handleDeleteDownload}
@@ -1171,7 +1238,7 @@ export default function App() {
             offline={offline}
           />
         )}
-        {updateBanner && (
+        {!isAndroid && updateBanner && (
           <div
             style={{
               position: "fixed",
