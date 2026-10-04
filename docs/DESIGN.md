@@ -12,6 +12,7 @@ No reference kit files, illustrations, fonts, or code were imported. The Android
 
 ## Decisions
 
+- **App icon:** a coral-red folded S ribbon with a play-shaped opening on charcoal. Android adaptive, circular, legacy and themed icons share the same silhouette; the launch splash uses the same mark. Export sizes and source artwork are described in [the branding guide](../resources/branding/README.md).
 - **Discovery:** a clear spotlight title and Watch now action, followed by horizontal poster rails. For you, Movies, and Series are working catalog filters.
 - **Artwork:** large backdrops carry the visual emphasis. Dark overlays keep text legible; individual posters retain their portrait proportions.
 - **Navigation:** a compact wordmark and search control above four persistent bottom destinations. A small accent marker identifies the selected destination.

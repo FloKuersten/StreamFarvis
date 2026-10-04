@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const { version } = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Expected a numeric release version in package.json');
 const win = process.platform === 'win32';
 function run(command, args, cwd = root) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: win, env: process.env });
@@ -29,7 +31,7 @@ run(win ? 'npm.cmd' : 'npm', ['run', 'android:sync']);
 run(win ? 'gradlew.bat' : './gradlew', [':app:testDebugUnitTest', ':app:lintDebug', ':app:assembleDebug', ':app:assembleRelease', '--console=plain'], path.join(root, 'android'));
 mkdirSync(path.join(root, 'artifacts'), { recursive: true });
 for (const variant of ['debug', 'release']) {
-  const output = path.join(root, `artifacts/StreamFarvis-1.0.0-${variant}.apk`);
+  const output = path.join(root, `artifacts/StreamFarvis-${version}-${variant}.apk`);
   copyFileSync(path.join(root, `android/app/build/outputs/apk/${variant}/app-${variant}.apk`), output);
   const hash = createHash('sha256').update(readFileSync(output)).digest('hex');
   writeFileSync(`${output}.sha256`, `${hash}  ${path.basename(output)}\n`);

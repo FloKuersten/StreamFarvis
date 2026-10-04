@@ -4,7 +4,7 @@ An Android adaptation of [Streambert](https://github.com/truelockmc/streambert),
 
 ## Install
 
-Download `StreamFarvis-1.0.0-release.apk` from the [latest GitHub release](https://github.com/FloKuersten/StreamFarvis/releases/latest), copy it to your Android device, open it, and permit your file manager to install apps if Android prompts you. Android 7.0 (API 24) or newer and an up-to-date Android System WebView are required. The signed APK is intended for sideloading.
+Download `StreamFarvis-1.0.1-release.apk` from the [latest GitHub release](https://github.com/FloKuersten/StreamFarvis/releases/latest), copy it to your Android device, open it, and permit your file manager to install apps if Android prompts you. Android 7.0 (API 24) or newer and an up-to-date Android System WebView are required. The signed APK is intended for sideloading.
 
 On first launch, enter your own **TMDB API Read Access Token**. Follow the setup link in the app or the existing [TMDB guide](tmdb-tutorial.md). No shared token is bundled. You can skip setup to inspect the interface, but catalog browsing/search need a token and an internet connection.
 

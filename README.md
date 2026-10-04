@@ -1,5 +1,7 @@
 # StreamFarvis
 
+<img src="public/streamfarvis-icon.png" width="96" alt="StreamFarvis red ribbon and play icon" />
+
 An Android adaptation of [Streambert](https://github.com/truelockmc/streambert), with a movie and series catalog, a personal watchlist, and a native fullscreen player window.
 
 [Download the latest APK](https://github.com/FloKuersten/StreamFarvis/releases/latest) · [Build from source](docs/DEVELOPMENT.md) · [Report a bug](https://github.com/FloKuersten/StreamFarvis/issues/new/choose)
@@ -15,7 +17,7 @@ An Android adaptation of [Streambert](https://github.com/truelockmc/streambert),
 
 Requires **Android 7.0 or newer**, an up-to-date Android System WebView, and an internet connection for catalog and playback services.
 
-1. Download `StreamFarvis-1.0.0-release.apk` from the [latest release](https://github.com/FloKuersten/StreamFarvis/releases/latest).
+1. Download `StreamFarvis-1.0.1-release.apk` from the [latest release](https://github.com/FloKuersten/StreamFarvis/releases/latest).
 2. Open the APK on your phone. If Android prompts you, allow your browser or file manager to install apps from this source.
 3. Launch StreamFarvis and enter your own **TMDB API Read Access Token**. The [token guide](tmdb-tutorial.md) explains how to get one. Use the long Read Access Token, not the shorter API key.
 4. Browse or search for a title, choose a movie or episode, and tap **Open player**. Android Back returns to the app.
