@@ -49,7 +49,13 @@ import {
   DEFAULT_UPDATE_SOURCE,
 } from "./utils/updates";
 
-const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
+const isAndroid =
+  import.meta.env.VITE_ANDROID === "1" ||
+  Capacitor.getPlatform() === "android" ||
+  Capacitor.getPlatform() === "ios" ||
+  import.meta.env.VITE_IOS === "1";
+const isIOS =
+  Capacitor.getPlatform() === "ios" || import.meta.env.VITE_IOS === "1";
 
 export default function App() {
   // apiKey loaded async from secure storage (OS keychain)
@@ -150,7 +156,7 @@ export default function App() {
 
   // ── Startup update check ─────────────────────────────────────────────────
   useEffect(() => {
-    if (isAndroid || !storage.get("autoCheckUpdates")) return;
+    if (!storage.get("autoCheckUpdates")) return;
     const source =
       storage.get(STORAGE_KEYS.UPDATE_SOURCE) || DEFAULT_UPDATE_SOURCE;
     checkForUpdatesWithFallback(source)
@@ -789,7 +795,7 @@ export default function App() {
   }, []);
   const gamepadToastedRef = useRef(false);
   const { connected: gamepadConnected } = useGamepadNav({
-    enabled: !isAndroid && gamepadEnabled,
+    enabled: gamepadEnabled,
     onBack: navigateBack,
     onOpenSearch: () => setShowSearch(true),
   });
@@ -1238,58 +1244,69 @@ export default function App() {
             offline={offline}
           />
         )}
-        {!isAndroid && updateBanner && (
+        {updateBanner && (
           <div
             style={{
               position: "fixed",
-              top: hasCustomTitlebar ? 32 : 0,
+              top: hasCustomTitlebar ? 32 : isAndroid ? "env(safe-area-inset-top, 0px)" : 0,
               left: 0,
               right: 0,
               zIndex: 9999,
-              background: "rgba(229,9,20,0.92)",
-              backdropFilter: "blur(8px)",
+              background: "rgba(229,9,20,0.95)",
+              backdropFilter: "blur(12px)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              gap: 16,
-              padding: "10px 24px",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.4)",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "10px 20px",
+              boxShadow: "0 2px 16px rgba(0,0,0,0.5)",
               fontSize: 14,
               fontWeight: 500,
               color: "#fff",
             }}
           >
-            <span>🎉 Streambert v{updateBanner.latest} is available!</span>
-            <button
-              onClick={() => setShowUpdateModal(true)}
-              style={{
-                color: "#fff",
-                fontWeight: 700,
-                background: "rgba(255,255,255,0.18)",
-                border: "1px solid rgba(255,255,255,0.4)",
-                borderRadius: 6,
-                padding: "4px 12px",
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              Install Update
-            </button>
-            <button
-              onClick={() => setUpdateBanner(null)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "rgba(255,255,255,0.7)",
-                cursor: "pointer",
-                fontSize: 18,
-                lineHeight: 1,
-                padding: "0 4px",
-              }}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
+            <span>🎉 StreamFarvis v{updateBanner.latest} is available!</span>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button
+                onClick={() => {
+                  if (isAndroid) {
+                    const dlUrl = isIOS
+                      ? (updateBanner.assets?.ipa || updateBanner.url)
+                      : (updateBanner.assets?.apk || updateBanner.url);
+                    window.electron?.openExternal?.(dlUrl);
+                  } else {
+                    setShowUpdateModal(true);
+                  }
+                }}
+                style={{
+                  color: "#fff",
+                  fontWeight: 700,
+                  background: "rgba(255,255,255,0.22)",
+                  border: "1px solid rgba(255,255,255,0.45)",
+                  borderRadius: 6,
+                  padding: "5px 14px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                {isIOS ? "Download IPA" : isAndroid ? "Download APK" : "Install Update"}
+              </button>
+              <button
+                onClick={() => setUpdateBanner(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "rgba(255,255,255,0.8)",
+                  cursor: "pointer",
+                  fontSize: 20,
+                  lineHeight: 1,
+                  padding: "0 6px",
+                }}
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
           </div>
         )}
         {showUpdateModal && updateBanner && (

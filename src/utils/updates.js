@@ -3,7 +3,7 @@
 //
 // Supports multiple release sources (GitHub + Codeberg).
 
-export const GITHUB_REPO = "truelockmc/streambert";
+export const GITHUB_REPO = "FloKuersten/StreamFarvis";
 export const CODEBERG_REPO = "truelockmc/streambert";
 
 // ── Source registry ───────────────────────────────────────────────────────────
@@ -47,9 +47,12 @@ export function semverGt(a, b) {
 // Fetch current app version fresh each time, avoids race condition
 async function getCurrentVersion() {
   if (typeof window !== "undefined" && window.electron?.getAppVersion) {
-    return window.electron.getAppVersion();
+    try {
+      const v = await window.electron.getAppVersion();
+      if (v && v !== "0.0.0") return v;
+    } catch {}
   }
-  return "0.0.0";
+  return "1.0.1";
 }
 
 /**
@@ -91,6 +94,8 @@ export async function checkForUpdates(source = DEFAULT_UPDATE_SOURCE) {
     else if (name.endsWith(".exe")) assets.exe = downloadUrl;
     else if (name.endsWith(".pacman")) assets.pacman = downloadUrl;
     else if (name.endsWith(".dmg")) assets.dmg = downloadUrl;
+    else if (name.endsWith(".apk")) assets.apk = downloadUrl;
+    else if (name.endsWith(".ipa")) assets.ipa = downloadUrl;
   }
 
   return {

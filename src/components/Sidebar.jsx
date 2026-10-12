@@ -15,7 +15,11 @@ import {
   HelpIcon,
 } from "./Icons";
 
-const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
+const isAndroid =
+  import.meta.env.VITE_ANDROID === "1" ||
+  import.meta.env.VITE_IOS === "1" ||
+  Capacitor.getPlatform() === "android" ||
+  Capacitor.getPlatform() === "ios";
 
 export default function Sidebar({
   page,

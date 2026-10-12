@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" style="background:#101116; border-radius:16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <defs>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#191c28"/>
+      <stop offset="100%" stop-color="#12141e"/>
+    </linearGradient>
+    <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff5e62"/>
+      <stop offset="100%" stop-color="#e74c3c"/>
+    </linearGradient>
+    <linearGradient id="accentGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e74c3c" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f39c12" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Outer container border -->
+  <rect x="2" y="2" width="956" height="296" rx="14" fill="#101116" stroke="#252a3d" stroke-width="2"/>
+  <rect x="24" y="2" width="912" height="3" fill="url(#coralGrad)"/>
+
+  <!-- Title section -->
+  <text x="48" y="44" fill="#ffffff" font-size="20" font-weight="700" letter-spacing="0.5">3 Ways to Load StreamFarvis APK</text>
+  <text x="48" y="66" fill="#8d94ab" font-size="13">Choose the fastest installation path for your Android phone, tablet, or TV device</text>
+
+  <!-- METHOD 1: Direct Download -->
+  <g transform="translate(48, 88)">
+    <rect width="268" height="180" rx="12" fill="url(#cardGrad)" stroke="#272d42" stroke-width="1.5"/>
+    <rect x="18" y="18" width="38" height="38" rx="8" fill="#e74c3c" fill-opacity="0.15" stroke="#e74c3c" stroke-width="1"/>
+    <!-- Download Icon -->
+    <path d="M37 28 v12 M32 35 l5 5 5-5 M30 44 h14" stroke="#ff6b6b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">1. Direct Browser</text>
+    <text x="68" y="50" fill="#2ecc71" font-size="11" font-weight="600">EASIEST FOR PHONES</text>
+    
+    <text x="18" y="82" fill="#c0c6dc" font-size="12" font-weight="400">
+      <tspan x="18" dy="0">• Open GitHub Releases in Chrome</tspan>
+      <tspan x="18" dy="19">• Tap &quot;Download anyway&quot;</tspan>
+      <tspan x="18" dy="19">• Allow &quot;Install unknown apps&quot;</tspan>
+      <tspan x="18" dy="19">• Confirm Play Protect prompt</tspan>
+    </text>
+
+    <rect x="18" y="146" width="232" height="22" rx="6" fill="#1e2436"/>
+    <text x="24" y="161" fill="#8fa0cc" font-size="10.5" font-family="monospace">Requires: Android 7.0+</text>
+  </g>
+
+  <!-- METHOD 2: QR Code Scan -->
+  <g transform="translate(346, 88)">
+    <rect width="268" height="180" rx="12" fill="url(#cardGrad)" stroke="#272d42" stroke-width="1.5"/>
+    <rect x="18" y="18" width="38" height="38" rx="8" fill="#9b59b6" fill-opacity="0.15" stroke="#9b59b6" stroke-width="1"/>
+    <!-- QR Icon -->
+    <path d="M28 28 h6 v6 h-6 z M38 28 h6 v6 h-6 z M28 38 h6 v6 h-6 z M38 38 h2 v2 h-2 z M42 42 h2 v2 h-2 z" stroke="#be79df" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">2. Scan from PC</text>
+    <text x="68" y="50" fill="#a78bfa" font-size="11" font-weight="600">INSTANT ON DESKTOP</text>
+
+    <text x="18" y="82" fill="#c0c6dc" font-size="12" font-weight="400">
+      <tspan x="18" dy="0">• View README QR code on PC</tspan>
+      <tspan x="18" dy="19">• Point phone camera to scan</tspan>
+      <tspan x="18" dy="19">• Opens release download directly</tspan>
+      <tspan x="18" dy="19">• Tap APK to install on device</tspan>
+    </text>
+
+    <rect x="18" y="146" width="232" height="22" rx="6" fill="#1e2436"/>
+    <text x="24" y="161" fill="#8fa0cc" font-size="10.5" font-family="monospace">Zero typing required</text>
+  </g>
+
+  <!-- METHOD 3: ADB Sideload -->
+  <g transform="translate(644, 88)">
+    <rect width="268" height="180" rx="12" fill="url(#cardGrad)" stroke="#272d42" stroke-width="1.5"/>
+    <rect x="18" y="18" width="38" height="38" rx="8" fill="#3498db" fill-opacity="0.15" stroke="#3498db" stroke-width="1"/>
+    <!-- Terminal Icon -->
+    <path d="M28 32 l5 5 -5 5 M36 42 h8" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">3. ADB Command</text>
+    <text x="68" y="50" fill="#38bdf8" font-size="11" font-weight="600">DEVS / ANDROID TV</text>
+
+    <text x="18" y="82" fill="#c0c6dc" font-size="12" font-weight="400">
+      <tspan x="18" dy="0">• Connect USB or Wi-Fi adb</tspan>
+      <tspan x="18" dy="19">• npm run android:install</tspan>
+      <tspan x="18" dy="19">• Or: adb install -r &lt;apk&gt;</tspan>
+      <tspan x="18" dy="19">• Works on Google TV &amp; Fire TV</tspan>
+    </text>
+
+    <rect x="18" y="146" width="232" height="22" rx="6" fill="#1e2436"/>
+    <text x="24" y="161" fill="#8fa0cc" font-size="10.5" font-family="monospace">npm run android:install</text>
+  </g>
+</svg>

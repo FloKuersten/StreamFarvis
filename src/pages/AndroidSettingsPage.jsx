@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { storage, secureStorage, STORAGE_KEYS, clearAppCaches } from "../utils/storage";
 import { ACCENT_PRESETS, THEME_PRESETS, applyAccentColor, applyTheme } from "../utils/appearance";
+import { checkForUpdatesWithFallback } from "../utils/updates";
 import licenseText from "../../LICENSE?raw";
 
 const LANGUAGES = [
@@ -25,6 +27,10 @@ export default function AndroidSettingsPage({ apiKey, onChangeApiKey }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [showLicense, setShowLicense] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateResult, setUpdateResult] = useState(null);
+  const [updateError, setUpdateError] = useState(null);
+  const isIOS = Capacitor.getPlatform() === "ios" || import.meta.env.VITE_IOS === "1";
 
   useEffect(() => {
     window.electron?.getAppVersion?.().then(setVersion).catch(() => {});
@@ -73,6 +79,20 @@ export default function AndroidSettingsPage({ apiKey, onChangeApiKey }) {
     } catch {
       setStatus("Could not reset secure storage. Please try again.");
       setBusy(false);
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    setCheckingUpdate(true);
+    setUpdateError(null);
+    setUpdateResult(null);
+    try {
+      const res = await checkForUpdatesWithFallback();
+      setUpdateResult(res);
+    } catch (err) {
+      setUpdateError(err?.message || "Could not check for updates. Check your connection.");
+    } finally {
+      setCheckingUpdate(false);
     }
   };
 
@@ -127,9 +147,66 @@ export default function AndroidSettingsPage({ apiKey, onChangeApiKey }) {
         {status && <p className="android-status" role="status">{status}</p>}
       </section>
 
+      <section className="android-settings-section" aria-labelledby="settings-updates">
+        <h2 id="settings-updates"><span className="android-section-index" aria-hidden="true">04</span> Updates</h2>
+        <div className="android-setting-row">
+          <div>
+            <h3>Check for updates</h3>
+            <p>StreamFarvis {version ? `v${version}` : ""} · GitHub Releases</p>
+          </div>
+          <button className="btn btn-secondary" disabled={checkingUpdate} onClick={handleCheckUpdates}>
+            {checkingUpdate ? "Checking…" : "Check now"}
+          </button>
+        </div>
+        {updateResult && (
+          <div style={{ marginTop: 12, padding: "14px 16px", background: "var(--surface2)", borderRadius: 8 }}>
+            {updateResult.hasUpdate ? (
+              <div>
+                <p style={{ fontWeight: 600, color: "var(--red)", marginBottom: 6 }}>
+                  🎉 Update available: v{updateResult.latest}
+                </p>
+                {updateResult.changelog && (
+                  <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 12, maxHeight: 120, overflowY: "auto", whiteSpace: "pre-wrap" }}>
+                    {updateResult.changelog.slice(0, 350)}
+                  </p>
+                )}
+                <div className="android-button-row">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const dlUrl = isIOS
+                        ? (updateResult.assets?.ipa || updateResult.url)
+                        : (updateResult.assets?.apk || updateResult.url);
+                      window.electron?.openExternal?.(dlUrl);
+                    }}
+                  >
+                    {isIOS ? "Download iOS Release" : "Download APK (v" + updateResult.latest + ")"}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => window.electron?.openExternal?.(updateResult.url)}
+                  >
+                    Release notes ↗
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: 14, color: "#48c774", margin: 0 }}>
+                ✓ StreamFarvis is up to date (v{version || updateResult.current}).
+              </p>
+            )}
+          </div>
+        )}
+        {updateError && (
+          <p className="android-status" style={{ color: "var(--red)" }} role="alert">
+            {updateError}
+          </p>
+        )}
+      </section>
+
       <section className="android-settings-section android-about" aria-labelledby="settings-about">
         <h2 id="settings-about">StreamFarvis {version && <span>v{version}</span>}</h2>
-        <p>Android adaptation of <ExternalLink href="https://github.com/truelockmc/streambert">Streambert by truelockmc and contributors</ExternalLink>, licensed under the GNU General Public License v3.</p>
+        <p>Mobile adaptation of <ExternalLink href="https://github.com/truelockmc/streambert">Streambert by truelockmc and contributors</ExternalLink>, licensed under the GNU General Public License v3.</p>
         <p>Movie and series metadata is provided by TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
         <button className="android-text-button" onClick={() => setShowLicense(true)}>Read the GPL-3.0 license</button>
       </section>

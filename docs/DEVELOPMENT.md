@@ -63,11 +63,15 @@ Set `TEST_BASE_URL` to use another preview URL. Set `CHROME_PATH` to an existing
 
 For a connected device or running emulator:
 
-```text
-adb install -r artifacts/StreamFarvis-1.0.0-debug.apk
+```bash
+# Automated install via npm helper script:
+npm run android:install
+
+# Or directly with adb:
+adb install -r -d -t artifacts/StreamFarvis-1.0.1-debug.apk
 ```
 
-The debug APK supports development inspection. The release APK disables WebView debugging. Keep personal tokens out of logs, screenshots, and test fixtures.
+The debug APK supports development inspection. The release APK disables WebView debugging. Keep personal tokens out of logs, screenshots, and test fixtures. See [docs/INSTALL.md](INSTALL.md) for full sideloading instructions.
 
 To compile the web bundle and run native unit tests separately:
 

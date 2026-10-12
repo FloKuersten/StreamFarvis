@@ -4,7 +4,15 @@ An Android adaptation of [Streambert](https://github.com/truelockmc/streambert),
 
 ## Install
 
-Download `StreamFarvis-1.0.1-release.apk` from the [latest GitHub release](https://github.com/FloKuersten/StreamFarvis/releases/latest), copy it to your Android device, open it, and permit your file manager to install apps if Android prompts you. Android 7.0 (API 24) or newer and an up-to-date Android System WebView are required. The signed APK is intended for sideloading.
+Download `StreamFarvis-1.0.1-release.apk` from the [latest GitHub release](https://github.com/FloKuersten/StreamFarvis/releases/latest) (SHA-256: `793f0bfa90da6027d0e78e1ed04491eb50966b930807a447ad7cd92c0b56d565`), open it on your device, and allow your browser or file manager to install unknown apps when prompted. Android 7.0 (API 24) or newer and an up-to-date Android System WebView are required.
+
+For a complete walkthrough covering phone browsers, Google Play Protect prompts, Android TV/Fire TV, ADB, and troubleshooting, see the [Comprehensive Installation Guide](docs/INSTALL.md).
+
+For quick development sideloading to a connected device or emulator:
+
+```powershell
+npm run android:install -- --release --launch
+```
 
 On first launch, enter your own **TMDB API Read Access Token**. Follow the setup link in the app or the existing [TMDB guide](tmdb-tutorial.md). No shared token is bundled. You can skip setup to inspect the interface, but catalog browsing/search need a token and an internet connection.
 
@@ -12,14 +20,17 @@ Select a movie or an episode, then tap **Open player**. The source selector lets
 
 ## Included in this port
 
-- Phone and tablet layouts, touch navigation and Android Back handling.
+- Phone, tablet, and Android TV layouts with touch and D-pad remote navigation.
+- Android TV Leanback launcher support with dedicated banner asset (`tv_banner.png`).
+- Native Picture-in-Picture (PiP) playback with floating window and auto-enter on leave.
+- In-app GitHub release update checker with 1-tap APK download in Settings.
 - TMDB metadata, search, movie/TV details, season and episode selection.
 - Local saved library and manually marked watched progress.
 - Playback in an isolated Android WebView with fullscreen and popup blocking.
 - TMDB tokens encrypted using Android Keystore; backups of app data are disabled.
 - Android appearance/language settings and external browser trailer links.
 
-The Electron downloader, local-file library, AllManga resolver, automatic playback progress tracking, automatic next-episode playback, desktop picture-in-picture, Discord presence, and desktop updater are not part of this Android build. Anime uses the normal TMDB providers/season numbering. This port does not implement the complete desktop request-blocking engine; third-party player content can still contain ads or tracking.
+The Electron downloader, local-file library, AllManga resolver, and Discord presence are not part of this Android build. Anime uses the normal TMDB providers/season numbering. This port does not implement the complete desktop request-blocking engine; third-party player content can still contain ads or tracking.
 
 ## Build again
 

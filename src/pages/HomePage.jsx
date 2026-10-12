@@ -9,7 +9,11 @@ import { isRestricted } from "../utils/ageRating";
 import { storage } from "../utils/storage";
 import { loadHomeLayout, loadHomeViewMode } from "../utils/homeLayout";
 
-const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
+const isAndroid =
+  import.meta.env.VITE_ANDROID === "1" ||
+  import.meta.env.VITE_IOS === "1" ||
+  Capacitor.getPlatform() === "android" ||
+  Capacitor.getPlatform() === "ios";
 
 /**
  * Extract up to `count` unique, recently watched items from the user's

@@ -1,13 +1,17 @@
 package com.farvis.streamfarvis;
 
 import android.annotation.SuppressLint;
+import android.app.PictureInPictureParams;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Rational;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,6 +67,7 @@ public class PlayerActivity extends ComponentActivity {
 
     private FrameLayout root;
     private LinearLayout page;
+    private LinearLayout toolbar;
     private FrameLayout playerContainer;
     private ProgressBar progress;
     private LinearLayout errorPanel;
@@ -111,7 +116,7 @@ public class PlayerActivity extends ComponentActivity {
         page.setOrientation(LinearLayout.VERTICAL);
         root.addView(page, new FrameLayout.LayoutParams(-1, -1));
 
-        LinearLayout toolbar = new LinearLayout(this);
+        toolbar = new LinearLayout(this);
         toolbar.setGravity(Gravity.CENTER_VERTICAL);
         toolbar.setPadding(dp(8), 0, dp(16), 0);
         toolbar.setBackgroundColor(BACKGROUND);
@@ -127,6 +132,13 @@ public class PlayerActivity extends ComponentActivity {
         title.setEllipsize(TextUtils.TruncateAt.END);
         title.setPadding(dp(12), 0, 0, 0);
         toolbar.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            Button pip = makeButton("PiP");
+            pip.setContentDescription("Picture in Picture");
+            pip.setOnClickListener(view -> enterPictureInPictureModeSafely());
+            toolbar.addView(pip, new LinearLayout.LayoutParams(dp(72), dp(52)));
+        }
         page.addView(toolbar, new LinearLayout.LayoutParams(-1, dp(56)));
 
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
@@ -386,6 +398,45 @@ public class PlayerActivity extends ComponentActivity {
         else finish();
     }
 
+    public void enterPictureInPictureModeSafely() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            try {
+                PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+                builder.setAspectRatio(new Rational(16, 9));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    builder.setAutoEnterEnabled(true);
+                    builder.setSeamlessResizeEnabled(true);
+                }
+                enterPictureInPictureMode(builder.build());
+            } catch (Exception exception) {
+                try {
+                    enterPictureInPictureMode();
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (!destroying && !pageFailed && webView != null) {
+            enterPictureInPictureModeSafely();
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        if (isInPictureInPictureMode) {
+            if (toolbar != null) toolbar.setVisibility(View.GONE);
+            if (progress != null) progress.setVisibility(View.GONE);
+        } else {
+            if (toolbar != null) toolbar.setVisibility(View.VISIBLE);
+            if (progress != null && !pageFailed) progress.setVisibility(View.INVISIBLE);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -401,6 +452,10 @@ public class PlayerActivity extends ComponentActivity {
 
     @Override
     protected void onPause() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode()) {
+            super.onPause();
+            return;
+        }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (webView != null) {
             if (WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) {

@@ -56,7 +56,42 @@ export function useGamepadNav({ enabled, onBack, onOpenSearch }) {
     if (!enabled) {
       clearGamepadFocus();
       setConnected(false);
+      return;
     }
+
+    const handleKeyDown = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const isInput = tag === "input" || tag === "textarea" || tag === "select";
+
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        if (isInput && !e.altKey && !e.metaKey) return;
+        e.preventDefault();
+        ensureInitialFocus();
+        const dirMap = {
+          ArrowUp: "up",
+          ArrowDown: "down",
+          ArrowLeft: "left",
+          ArrowRight: "right",
+        };
+        moveGamepadFocus(dirMap[e.key]);
+      } else if (e.key === "Enter" || e.key === "Select") {
+        if (isInput) return;
+        e.preventDefault();
+        ensureInitialFocus();
+        confirmGamepadFocus();
+      } else if (e.key === "Escape" || e.key === "Backspace" || e.key === "GoBack") {
+        if (isInput) return;
+        if (dismissActiveOverlay()) {
+          e.preventDefault();
+        } else if (onBackRef.current) {
+          e.preventDefault();
+          onBackRef.current();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enabled]);
 
   return { connected };

@@ -1,0 +1,26 @@
+[2026-10-12T15:05:51.426Z] analysis started
+  project root: D:\WORK\StreamFarvis
+  output dir:   D:\WORK\StreamFarvis\.cheburnexus\out
+  per-step ceiling: 900s (AA_ANALYZE_TIMEOUT_MS)
+
+[2026-10-12T15:05:51.521Z] step 'language engine' started
+  C:\Users\Flo\AppData\Roaming\Cursor\User\globalStorage\conceptual-games.cheburnexus\engines\current\cheburnexus-ts-engine.exe --path D:\WORK\StreamFarvis --output-dir D:\WORK\StreamFarvis\.cheburnexus\out
+CORE emitted → D:\WORK\StreamFarvis\.cheburnexus\out
+  files: 92  types: 10  type-edges: 8
+[2026-10-12T15:05:52.555Z] step 'language engine' finished in 157s (exit 0)
+
+[2026-10-12T15:05:52.556Z] step 'computer (derived)' started
+  C:\Users\Flo\AppData\Roaming\Cursor\User\globalStorage\conceptual-games.cheburnexus\engines\current\arch-computer.exe --core-input D:\WORK\StreamFarvis\.cheburnexus\out --project-root D:\WORK\StreamFarvis --output D:\WORK\StreamFarvis\.cheburnexus\out\architecture.json
+[emitCore] 0 tsconfig(s), 0 path-alias rule(s) discovered under D:/WORK/StreamFarvis
+Core-input: D:/WORK/StreamFarvis/.cheburnexus/out
+Mode:      core (foreign CORE-JSON → shared DERIVED computer)
+
+Files:        92
+Dependencies: 34
+Cycles:       0
+Findings:     15  (high: 0, medium: 15, low: 0)
+  Architecture 0
+  Smells       15  (complexity 15)
+  Hygiene      0
+Output:    D:/WORK/StreamFarvis/.cheburnexus/out/architecture.json
+[2026-10-12T15:05:56.830Z] step 'computer (derived)' finished in 4s (exit 0)

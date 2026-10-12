@@ -3,7 +3,11 @@ import { Capacitor } from "@capacitor/core";
 import { StreambertLogo, PlayIcon } from "./Icons";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
-const isAndroid = import.meta.env.VITE_ANDROID === "1" || Capacitor.getPlatform() === "android";
+const isAndroid =
+  import.meta.env.VITE_ANDROID === "1" ||
+  import.meta.env.VITE_IOS === "1" ||
+  Capacitor.getPlatform() === "android" ||
+  Capacitor.getPlatform() === "ios";
 
 async function validateToken(token) {
   // Step 1: Can we reach TMDB at all?
